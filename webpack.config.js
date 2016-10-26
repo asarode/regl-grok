@@ -1,8 +1,6 @@
 var webpack = require('webpack')
 var path = require('path')
 
-console.log(path.join(__dirname, 'modules'))
-
 var config = {
   entry: [
     'webpack-dev-server/client?http://localhost:5050',

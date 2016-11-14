@@ -9,8 +9,13 @@ const sinePct = 0.5
 const smoothing = 0.14
 
 const range = (length) => [...Array(length).keys()]
+const toRadian = (degrees) => Math.PI / 180 * degrees
 
-const circle = (v) => regl({
+const drawWavyCircle = regl({
+  context: {
+    resolution: 360,
+    smoothingDistance: 0.14
+  },
   vert: `
     precision mediump float;
     attribute vec3 position;
@@ -26,66 +31,101 @@ const circle = (v) => regl({
     }
   `,
   attributes: {
-    position: v
+    position: ({ resolution, tick, smoothingDistance }, props) => {
+      const {
+        angleOffset = 0,
+        wavyFill = 0.5,
+        amplitude = 0.1,
+        pattern = 'sin',
+      } = props
+      const pos = range(360).map((i) => {
+        let smoothingFactor = 1
+        if (i < wavyFill * resolution * smoothingDistance) {
+          smoothingFactor = i / (wavyFill * resolution * smoothingDistance);
+        }
+        if (i > wavyFill * resolution * (1 - smoothingDistance) && i <= wavyFill * resolution) {
+          smoothingFactor = (wavyFill * resolution - i) / (wavyFill * resolution * smoothingDistance);
+        }
+        if (i === resolution) {
+          smoothingFactor = 0
+        }
+
+        const animTick = (tick / 85) + 90
+        const angle = toRadian(i) + toRadian(angleOffset)
+        let addon = 0
+        if (i < wavyFill * resolution) {
+          const sineFn = pattern === 'cos' ? Math.cos : Math.sin
+          addon = amplitude * smoothingFactor * sineFn((angle + animTick) * waves)
+        }
+
+        const x = (radius + addon) * Math.cos(angle + animTick)
+        const y = (radius + addon) * Math.sin(angle + animTick)
+        const z = 0
+        return [x, y, z]
+      })
+      return pos
+    }
   },
   uniforms: {
     color: regl.prop('color')
   },
   primitive: 'line loop',
-  count: v.length,
+  count: 360,
   lineWidth: 7
 })
 
-regl.frame(({ tick }) => {
-  const vertices = (type) => range(resolution).map((i) => {
-    let smoothPct = 1
-    const angle = Math.PI / 180 * i
-
-    if (i < sinePct * resolution * smoothing) {
-      smoothPct = i / (sinePct * resolution * smoothing);
-    }
-    if (i > sinePct * resolution * (1 - smoothing) && i <= sinePct * resolution) {
-      smoothPct = (sinePct * resolution - i) / (sinePct * resolution * smoothing);
-    }
-    if (i === resolution) {
-      smoothPct = 0
-    }
-
-    let addon = 0
-    if (i < sinePct * resolution) {
-      if (type === 0) {
-        addon = waveHeight * smoothPct * Math.sin((angle + tick / 100) * waves)
-      }
-      if (type === 1) {
-        addon = waveHeight * smoothPct * Math.cos((angle + tick / 100) * waves)
-      }
-      if (type === 2) {
-        addon = waveHeight * smoothPct * Math.cos(((angle + (Math.PI / 180 * 120) + tick / 100)) * waves)
-      }
-    }
-    let x, y, z
-    if (type === 0) {
-      x = (radius + addon) * Math.cos(angle + tick / 75)
-      y = (radius + addon) * Math.sin(angle + tick / 75)
-      z = 0
-    }
-    if (type === 1) {
-      x = (radius - 0.015 + addon) * Math.cos(angle + tick / 75)
-      y = (radius - 0.015 + addon) * Math.sin(angle + tick / 75)
-      z = 0
-    }
-    if (type === 2) {
-      x = (radius + 0.015 + addon) * Math.cos(angle + tick / 75)
-      y = (radius + 0.015 + addon) * Math.sin(angle + tick / 75)
-      z = 0
-    }
-    return [x, y, z]
-  })
+regl.frame(() => {
   regl.clear({
-    color: [0, 0, 0, 1],
+    color: [0.03, 0.03, 0.03, 1],
     depth: 1
   })
-  circle(vertices(0))({ color: [1, 1, 0.7, 1] })
-  circle(vertices(1))({ color: [1, 0.7, 1, 1] })
-  circle(vertices(2))({ color: [0.7, 1, 1, 1] })
+  drawWavyCircle({
+    radius: 0.8,
+    amplitude: 0.1,
+    pattern: 'sin',
+    wavyFill: 0.3,
+    angleOffset: 0,
+    color: [1, 1, 0.8, 1]
+  })
+  drawWavyCircle({
+    radius: 0.8,
+    amplitude: 0.12,
+    pattern: 'cos',
+    wavyFill: 0.3,
+    angleOffset: 0,
+    color: [1, 0.8, 0.8, 1]
+  })
+  drawWavyCircle({
+    radius: 0.8,
+    amplitude: 0.08,
+    pattern: 'cos',
+    wavyFill: 0.3,
+    angleOffset: 0,
+    color: [0.8, 0.3, 0.3, 1]
+  })
+
+  drawWavyCircle({
+    radius: 0.8,
+    amplitude: 0.1,
+    pattern: 'sin',
+    wavyFill: 0.3,
+    angleOffset: 180,
+    color: [1, 1, 0.8, 1]
+  })
+  drawWavyCircle({
+    radius: 0.8,
+    amplitude: 0.12,
+    pattern: 'cos',
+    wavyFill: 0.3,
+    angleOffset: 180,
+    color: [1, 0.8, 0.8, 1]
+  })
+  drawWavyCircle({
+    radius: 0.8,
+    amplitude: 0.08,
+    pattern: 'cos',
+    wavyFill: 0.3,
+    angleOffset: 180,
+    color: [0.8, 0.3, 0.3, 1]
+  })
 })

@@ -1,1 +1,1 @@
-import './clipspace'
+import './sine-animation'

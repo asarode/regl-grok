@@ -30,7 +30,7 @@ var config = {
         loader: 'babel',
         include: path.join(__dirname, 'modules'),
         query: {
-          presets: ['es2015']
+          presets: ['es2015', 'stage-0']
         }
       },
       {
@@ -43,6 +43,10 @@ var config = {
           'file?hash=sha512&digest=hex&name=[hash].[ext]',
           'image-webpack?bypassOnDebug&optimizationLevel=7&interlaced=false'
         ]
+      },
+      {
+        test: /\.xyz$/,
+        loader: 'raw',
       }
     ]
   }

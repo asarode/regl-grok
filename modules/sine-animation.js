@@ -18,9 +18,47 @@ const drawWavyCircle = regl({
   },
   vert: `
     precision mediump float;
-    attribute vec3 position;
+
+    attribute float increment;
+
+    uniform float tick;
+    uniform float resolution;
+    uniform float smoothingDistance;
+    uniform float angleOffset;
+    uniform float wavyFill;
+    uniform float amplitude;
+    uniform float waves;
+    uniform float radius;
+    uniform int pattern;
+
     void main() {
-      gl_Position = vec4(position, 1);
+      float smoothingFactor = 1.0;
+      if (increment < wavyFill * resolution * smoothingDistance) {
+        smoothingFactor = increment / (wavyFill * resolution * smoothingDistance);
+      } else if (increment > wavyFill * resolution * (1.0 - smoothingDistance) && increment <= wavyFill * resolution) {
+        smoothingFactor = (wavyFill * resolution - increment) / (wavyFill * resolution * smoothingDistance);
+      } else if (increment == resolution) {
+        smoothingFactor = 0.0;
+      }
+
+      float animTick = tick / 85.0 + 90.0;
+      float angle = radians(increment) + radians(angleOffset);
+      float addon = 0.0;
+      if (increment < wavyFill * resolution) {
+        float sineOutput;
+        if (pattern == 0) {
+          sineOutput = sin((angle + animTick) * waves);
+        } else if (pattern == 1) {
+          sineOutput = cos((angle + animTick) * waves);
+        }
+        addon = amplitude * smoothingFactor * sineOutput;
+      }
+
+      float x = (radius + addon) * cos(angle + animTick);
+      float y = (radius + addon) * sin(angle + animTick);
+      float z = 0.0;
+
+      gl_Position = vec4(x, y, z, 1);
     }
   `,
   frag: `
@@ -31,46 +69,22 @@ const drawWavyCircle = regl({
     }
   `,
   attributes: {
-    position: ({ resolution, tick, smoothingDistance }, props) => {
-      const {
-        angleOffset = 0,
-        wavyFill = 0.5,
-        amplitude = 0.1,
-        pattern = 'sin',
-      } = props
-      const pos = range(360).map((i) => {
-        let smoothingFactor = 1
-        if (i < wavyFill * resolution * smoothingDistance) {
-          smoothingFactor = i / (wavyFill * resolution * smoothingDistance);
-        }
-        if (i > wavyFill * resolution * (1 - smoothingDistance) && i <= wavyFill * resolution) {
-          smoothingFactor = (wavyFill * resolution - i) / (wavyFill * resolution * smoothingDistance);
-        }
-        if (i === resolution) {
-          smoothingFactor = 0
-        }
-
-        const animTick = (tick / 85) + 90
-        const angle = toRadian(i) + toRadian(angleOffset)
-        let addon = 0
-        if (i < wavyFill * resolution) {
-          const sineFn = pattern === 'cos' ? Math.cos : Math.sin
-          addon = amplitude * smoothingFactor * sineFn((angle + animTick) * waves)
-        }
-
-        const x = (radius + addon) * Math.cos(angle + animTick)
-        const y = (radius + addon) * Math.sin(angle + animTick)
-        const z = 0
-        return [x, y, z]
-      })
-      return pos
-    }
+    increment: range(resolution)
   },
   uniforms: {
-    color: regl.prop('color')
+    color: regl.prop('color'),
+    tick: regl.context('tick'),
+    resolution: regl.context('resolution'),
+    smoothingDistance: regl.context('smoothingDistance'),
+    angleOffset: regl.prop('angleOffset'),
+    wavyFill: regl.prop('wavyFill'),
+    amplitude: regl.prop('amplitude'),
+    waves: (context, props) => props.waves || 12,
+    radius: regl.prop('radius'),
+    pattern: () => regl.prop('pattern') === 'sin' ? 0 : 1,
   },
   primitive: 'line loop',
-  count: 360,
+  count: resolution,
   lineWidth: 7
 })
 
@@ -80,52 +94,30 @@ regl.frame(() => {
     depth: 1
   })
   drawWavyCircle({
-    radius: 0.8,
-    amplitude: 0.1,
+    radius: 0.75,
+    amplitude: 0.03,
     pattern: 'sin',
-    wavyFill: 0.3,
+    wavyFill: 0.5,
     angleOffset: 0,
+    waves: 16,
     color: [1, 1, 0.8, 1]
   })
   drawWavyCircle({
     radius: 0.8,
-    amplitude: 0.12,
+    amplitude: 0.05,
     pattern: 'cos',
-    wavyFill: 0.3,
+    wavyFill: 0.5,
     angleOffset: 0,
+    waves: 16,
     color: [1, 0.8, 0.8, 1]
   })
   drawWavyCircle({
-    radius: 0.8,
-    amplitude: 0.08,
+    radius: 0.775,
+    amplitude: 0.04,
     pattern: 'cos',
-    wavyFill: 0.3,
+    wavyFill: 0.5,
     angleOffset: 0,
-    color: [0.8, 0.3, 0.3, 1]
-  })
-
-  drawWavyCircle({
-    radius: 0.8,
-    amplitude: 0.1,
-    pattern: 'sin',
-    wavyFill: 0.3,
-    angleOffset: 180,
-    color: [1, 1, 0.8, 1]
-  })
-  drawWavyCircle({
-    radius: 0.8,
-    amplitude: 0.12,
-    pattern: 'cos',
-    wavyFill: 0.3,
-    angleOffset: 180,
-    color: [1, 0.8, 0.8, 1]
-  })
-  drawWavyCircle({
-    radius: 0.8,
-    amplitude: 0.08,
-    pattern: 'cos',
-    wavyFill: 0.3,
-    angleOffset: 180,
+    waves: 16,
     color: [0.8, 0.3, 0.3, 1]
   })
 })

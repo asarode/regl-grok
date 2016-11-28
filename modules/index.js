@@ -1,1 +1,1 @@
-import './sine-animation'
+import './lighting'

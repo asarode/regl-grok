@@ -10,8 +10,8 @@ const drawBunny = regl({
     view: ({ tick }) => {
       const t = 0.01 * tick
       return mat4.lookAt([],
-        [30 * Math.cos(t), 15, 30 * Math.sin(t)],
-        [0, 2.5, 0],
+        [0, 0, 100],
+        [0, 0, 0],
         [0, 1, 0])
     }
   },
@@ -23,8 +23,8 @@ const drawBunny = regl({
 
     void main() {
       fragNormal = normal;
-      fragPosition = position;
-      gl_Position = projection * view * vec4(position, 1);
+      fragPosition =  1.0 * position;
+      gl_Position = projection * view * vec4(fragPosition, 1);
     }
   `,
   frag: `

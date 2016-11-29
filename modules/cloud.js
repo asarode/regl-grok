@@ -1,20 +1,20 @@
 import Regl from 'regl'
 import mat4 from 'gl-mat4'
-import goatRock from '../assets/goat-rock.xyz'
+import vec4 from 'gl-vec4'
+import goatRock from '../assets/points.xyz'
 
 const regl = Regl()
 
 const drawPointCloud = ({ positions, color }) => {
-  console.log(positions)
   return regl({
     vert: `
-      precision mediump float;
+      precision highp float;
       attribute vec3 position;
       uniform mat4 view, projection;
 
       void main() {
+        gl_PointSize = 1.0;
         gl_Position = projection * view * vec4(position, 1.0);
-        gl_PointSize = 10.0;
       }
     `,
     frag: `
@@ -30,13 +30,10 @@ const drawPointCloud = ({ positions, color }) => {
     },
     uniforms: {
       color,
-      view: ({tick}) => {
-        const t = 0.01 * tick
-        return mat4.lookAt([],
-          [30 * Math.cos(t), 2.5, 30 * Math.sin(t)],
-          [0, 0, 0],
-          [0, 1, 0])
-      },
+      view: mat4.lookAt([],
+        [0, 120, 70],
+        [0, 0, 0],
+        [0, 0.3, 0.7]),
       projection: ({viewportWidth, viewportHeight}) =>
         mat4.perspective([],
           Math.PI / 4, viewportWidth / viewportHeight, 0.01, 1000)
@@ -47,18 +44,35 @@ const drawPointCloud = ({ positions, color }) => {
 }
 
 const parseXyz = (xyzStr) => xyzStr.split('\n').filter((line) => line !== '')
-  .map((line) => line.split(',').map(Number.parseFloat))
+  .map((line) => line.split(',').map(Number.parseFloat).map(x => x))
 const randColor = () => Math.random() * 0.2 + 0.4
 
 const goatRockPoints = parseXyz(goatRock)
+
+const xs = goatRockPoints.map((coord) => coord[0])
+const ys = goatRockPoints.map((coord) => coord[1])
+const zs = goatRockPoints.map((coord) => coord[2])
+const minX = xs.reduce((min, x) => Math.min(min, x), Infinity)
+const maxX = xs.reduce((max, x) => Math.max(max, x), -Infinity)
+const minY = ys.reduce((min, y) => Math.min(min, y), Infinity)
+const maxY = ys.reduce((max, y) => Math.max(max, y), - Infinity)
+const minZ = zs.reduce((min, z) => Math.min(min, z), Infinity)
+const maxZ = zs.reduce((max, z) => Math.max(max, z), -Infinity)
+const center = [(minX + maxX) / 2, (minY + maxY) / 2, (minZ + maxZ) / 2]
+const centered = goatRockPoints.map(([x, y, z]) => {
+  const cx = x - center[0]
+  const cy = y - center[1]
+  const cz = z - center[2]
+  return [cx, cy, cz]
+})
+console.log(centered)
 const pointCloud = {
-  positions: goatRockPoints,
-  color: [1, 0, 0, 1]
+  positions: centered,
+  color: [1, 0.98, 0.88, 1]
 }
-console.log(pointCloud)
 regl.frame(() => {
   regl.clear({
-    color: [0.9, 0.9, 0.9, 1]
+    color: [0.22, 0.11, 0.47, 1]
   })
   drawPointCloud(pointCloud)()
 })

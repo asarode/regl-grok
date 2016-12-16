@@ -6,15 +6,6 @@ import normals from 'angle-normals'
 const regl = Regl()
 
 const drawBunny = regl({
-  context: {
-    view: ({ tick }) => {
-      const t = 0.01 * tick
-      return mat4.lookAt([],
-        [0, 0, 100],
-        [0, 0, 0],
-        [0, 1, 0])
-    }
-  },
   vert: `
     precision mediump float;
     attribute vec3 normal, position;
@@ -49,6 +40,15 @@ const drawBunny = regl({
       gl_FragColor = (ambient + diffuse + specular) * vec4(light.color, 1.0);
     }
   `,
+  context: {
+    view: ({ tick }) => {
+      const t = 0.01 * tick
+      return mat4.lookAt([],
+        [0, 20, 50],
+        [0, 0, 0],
+        [0, 1, 0])
+    }
+  },
   attributes: {
     position: bunny.positions,
     normal: normals(bunny.cells, bunny.positions)
@@ -71,6 +71,4 @@ const drawBunny = regl({
   }
 })
 
-regl.frame(() => {
-  drawBunny()
-})
+drawBunny()

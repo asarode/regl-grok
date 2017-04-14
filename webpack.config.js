@@ -26,16 +26,24 @@ var config = {
   module: {
     loaders: [
       {
-        test: /\.js?$/,
-        loader: 'babel',
+        test: /\.js$/,
+        loader: 'babel-loader',
         include: path.join(__dirname, 'modules'),
         query: {
           presets: ['es2015', 'stage-0']
         }
       },
       {
+        test: /\.(glsl|vert|frag)$/,
+        loader: 'glslify-loader'
+      },
+      {
         test: /\.json/,
         loader: 'json'
+      },
+      {
+        test: /\.(glsl|vert|frag)$/,
+        loader: 'raw-loader'
       },
       {
         test: /\.(jpe?g|png|gif|svg)$/i,

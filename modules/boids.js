@@ -9,8 +9,8 @@ const NUM_BOIDS = 128
 const BOID_DATA_SIZE = 4 * (3 + 3 + 3)
 const boidData = Array(NUM_BOIDS).fill().map(() => {
   const color = hsv2rgb(Math.random() * 110 + 250, 0.6, 1).map(v => v / 255)
-  const position = vec3.random([], 5)
-  const velocity = vec3.random([], 0.01)
+  const position = vec3.random([], 25)
+  const velocity = vec3.random([], 0.25)
   return [
     position,
     velocity,
@@ -21,14 +21,91 @@ const boidBuffer = regl.buffer({
   data: boidData
 })
 
-const updateBoids = (timeStep) => {
-  const newBoidData = boidData.map((boid) => {
-    const position = vec3.fromValues(...boid[0])
-    const velocity = vec3.fromValues(...boid[1])
-    const movement = vec3.scale([], velocity, timeStep)
-    const newPosition = vec3.add([], position, movement)
+const getNearbyBoids = (boid, allBoids) => {
+  return allBoids.filter((b) => {
+    // return b !== boid
+    return b !== boid && vec3.squaredDistance(boid[0], b[0]) < 100
+  })
+}
+
+const flyToCenter = (boid, nearbyBoids) => {
+  const positionSum = vec3.create()
+  for (let i = 0; i < nearbyBoids.length; i++) {
+    const b = nearbyBoids[i]
+    vec3.add(positionSum, positionSum, b[0])
+  }
+  const center = vec3.scale([], positionSum, 1 / nearbyBoids.length)
+  const vecToCenter = vec3.subtract([], center, boid[0])
+  return vec3.scale([], vecToCenter, 1 / 100)
+}
+
+const flyAwayFromOthers = (boid, nearbyBoids) => {
+  const vecAway = vec3.create()
+  for (let i = 0; i < nearbyBoids.length; i++) {
+    const b = nearbyBoids[i]
+    if (vec3.squaredDistance(b[0], boid[0]) < 25) {
+      const vecAwayFromBoid = vec3.subtract([], b[0], boid[0])
+      vec3.subtract(vecAway, vecAway, vecAwayFromBoid)
+    }
+  }
+  return vecAway
+}
+
+const flyInSameDir = (boid, nearbyBoids) => {
+  const velocitySum = vec3.create()
+  for (let i = 0; i < nearbyBoids.length; i++) {
+    const b = nearbyBoids[i]
+    vec3.add(velocitySum, velocitySum, b[1])
+  }
+  const vecSameDir = vec3.scale([], velocitySum, 1 / nearbyBoids.length)
+  const vecWithoutTargetBoidVelocity = vec3.subtract([], vecSameDir, boid[1])
+  return vec3.scale([], vecWithoutTargetBoidVelocity, 1 / 8)
+}
+
+const limitVelocity = (velocity) => {
+  const max = 0.5
+  if (vec3.length(velocity) > max) {
+    vec3.scale(velocity, vec3.normalize(velocity, velocity), max)
+  }
+  return velocity
+}
+
+const keepInside = ([x, y, z], velocity) => {
+  const bound = 30
+  if (x < -bound) {
+    velocity[0] = 10
+  } else if (x > bound) {
+    velocity[0] = -10
+  }
+  if (y < -bound) {
+    velocity[1] = 10
+  } else if (y > bound) {
+    velocity[1] = -10
+  }
+  if (z < -bound) {
+    velocity[2] = 10
+  } else if (z > bound) {
+    velocity[2] = -10
+  }
+  return velocity
+}
+
+const updateBoids = () => {
+  const newBoidData = boidData.map((boid, _, data) => {
+    const nearbyBoids = getNearbyBoids(boid, data)
+    const rule1 = flyToCenter(boid, nearbyBoids)
+    const rule2 = flyAwayFromOthers(boid, nearbyBoids)
+    const rule3 = flyInSameDir(boid, nearbyBoids)
+    const ruleSum = [
+      rule1[0] + rule2[0] + rule3[0],
+      rule1[1] + rule2[1] + rule3[1],
+      rule1[2] + rule2[2] + rule3[2],
+    ]
+    const newVelocity = limitVelocity(keepInside(boid[0], vec3.add([], boid[1], ruleSum)))
+    const newPosition = vec3.add([], boid[0], newVelocity)
 
     boid[0] = newPosition
+    boid[1] = newVelocity
     return boid
   })
 
@@ -45,7 +122,7 @@ const drawBoids = regl({
     varying vec3 fragColor;
 
     void main() {
-      gl_PointSize = 3.0;
+      gl_PointSize = 5.0;
       gl_Position = projection * view * vec4(position, 1);
       fragColor = color;
     }
@@ -77,9 +154,9 @@ const drawBoids = regl({
   },
   uniforms: {
     view: ({ tick }) => {
-      const t = 0.001 * tick
+      const t = 0.025 * tick
       return mat4.lookAt([],
-        [30 * Math.cos(t), 2.5, 30 * Math.sin(t)],
+        [100 * Math.cos(t), 2.5, 100 * Math.sin(t)],
         [0, 0, 0],
         [0, 1, 0])
     },
@@ -103,6 +180,7 @@ regl.frame(({ time }) => {
   })
 
   const timeStep = time - lastTime
-  updateBoids(timeStep)
+  lastTime = time
+  updateBoids()
   drawBoids()
 })

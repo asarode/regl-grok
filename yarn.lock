@@ -1250,6 +1250,10 @@ dashdash@^1.12.0:
   dependencies:
     assert-plus "^1.0.0"
 
+dat.gui@^0.6.1:
+  version "0.6.1"
+  resolved "https://registry.yarnpkg.com/dat.gui/-/dat.gui-0.6.1.tgz#7c3d0a2ac2c570dafb61b91203fd7fe3171d6ac7"
+
 date-now@^0.1.4:
   version "0.1.4"
   resolved "https://registry.yarnpkg.com/date-now/-/date-now-0.1.4.tgz#eaf439fd4d4848ad74e5cc7dbef200672b9e345b"
@@ -2950,6 +2954,10 @@ lodash@^4.16.2, lodash@^4.2.0:
   version "4.16.4"
   resolved "https://registry.yarnpkg.com/lodash/-/lodash-4.16.4.tgz#01ce306b9bad1319f2a5528674f88297aeb70127"
 
+lodash@^4.17.4:
+  version "4.17.4"
+  resolved "https://registry.yarnpkg.com/lodash/-/lodash-4.17.4.tgz#78203a4d1c328ae1d86dca6460e369b57f4055ae"
+
 logalot@^2.0.0:
   version "2.1.0"
   resolved "https://registry.yarnpkg.com/logalot/-/logalot-2.1.0.tgz#5f8e8c90d304edf12530951a5554abb8c5e3f552"
@@ -4022,6 +4030,10 @@ static-module@^1.1.2:
     shallow-copy "~0.0.1"
     static-eval "~0.2.0"
     through2 "~0.4.1"
+
+stats.js@^0.17.0:
+  version "0.17.0"
+  resolved "https://registry.yarnpkg.com/stats.js/-/stats.js-0.17.0.tgz#b1c3dc46d94498b578b7fd3985b81ace7131cc7d"
 
 "statuses@>= 1.3.0 < 2", statuses@~1.3.0:
   version "1.3.0"

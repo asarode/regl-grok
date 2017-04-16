@@ -3,6 +3,7 @@ import vec3 from 'gl-vec3'
 import mat4 from 'gl-mat4'
 import hsv2rgb from 'hsv2rgb'
 import Stats from 'stats.js'
+import { GUI } from 'dat.gui/build/dat.gui.js'
 import isEqual from 'lodash/isEqual'
 
 const stats = new Stats()
@@ -23,6 +24,16 @@ const options = {
   boundCorrection: 0.3,
   stepSize: 0.1
 }
+const gui = new GUI()
+gui.add(options, 'nearbyDistance')
+gui.add(options, 'avoidDistance')
+gui.add(options, 'followMultiplier')
+gui.add(options, 'toCenterMultiplier')
+gui.add(options, 'maxSpeed')
+gui.add(options, 'minSpeed')
+gui.add(options, 'boundSize')
+gui.add(options, 'boundCorrection')
+gui.add(options, 'stepSize')
 
 var BOID_DATA
 var BOID_BUFFER

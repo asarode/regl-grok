@@ -21,6 +21,7 @@
     "glslify-loader": "^1.0.2",
     "hsv2rgb": "^1.1.0",
     "lodash": "^4.17.4",
+    "primitive-plane": "^2.0.0",
     "regl": "^1.2.1",
     "regl-camera": "^1.1.0",
     "resl": "^1.0.3",

@@ -29,9 +29,6 @@ var config = {
         test: /\.js$/,
         loader: 'babel-loader',
         include: path.join(__dirname, 'modules'),
-        query: {
-          presets: ['es2015', 'stage-0']
-        }
       },
       {
         test: /\.(glsl|vert|frag)$/,

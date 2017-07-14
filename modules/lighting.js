@@ -2,7 +2,6 @@ import Regl from 'regl'
 import mat4 from 'gl-mat4'
 import bunny from 'bunny'
 import normals from 'angle-normals'
-import glsl from 'glslify'
 
 import { Bunny } from './bunny/command'
 

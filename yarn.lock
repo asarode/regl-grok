@@ -370,6 +370,14 @@ babel-plugin-check-es2015-constants@^6.3.13:
   dependencies:
     babel-runtime "^6.0.0"
 
+babel-plugin-glslify@^2.0.0:
+  version "2.0.0"
+  resolved "https://registry.yarnpkg.com/babel-plugin-glslify/-/babel-plugin-glslify-2.0.0.tgz#74b5f869de71a621d5fe60d2ca4492e5fd05c349"
+  dependencies:
+    bl "^1.1.2"
+    glslify-bundle "^5.0.0"
+    glslify-deps "^1.2.5"
+
 babel-plugin-syntax-async-functions@^6.8.0:
   version "6.13.0"
   resolved "https://registry.yarnpkg.com/babel-plugin-syntax-async-functions/-/babel-plugin-syntax-async-functions-6.13.0.tgz#cad9cad1191b5ad634bf30ae0872391e0647be95"
@@ -910,6 +918,12 @@ bl@^1.0.0, bl@~1.1.2:
   resolved "https://registry.yarnpkg.com/bl/-/bl-1.1.2.tgz#fdca871a99713aa00d19e3bbba41c44787a65398"
   dependencies:
     readable-stream "~2.0.5"
+
+bl@^1.1.2:
+  version "1.2.1"
+  resolved "https://registry.yarnpkg.com/bl/-/bl-1.2.1.tgz#cac328f7bee45730d404b692203fcb590e172d5e"
+  dependencies:
+    readable-stream "^2.0.5"
 
 block-stream@*:
   version "0.0.9"
@@ -1954,6 +1968,10 @@ gifsicle@^3.0.0:
     bin-wrapper "^3.0.0"
     logalot "^2.0.0"
 
+gl-mat3@^1.0.0:
+  version "1.0.0"
+  resolved "https://registry.yarnpkg.com/gl-mat3/-/gl-mat3-1.0.0.tgz#89633219ca429379a16b9185d95d41713453b912"
+
 gl-mat4, gl-mat4@^1.1.3, gl-mat4@^1.1.4:
   version "1.1.4"
   resolved "https://registry.yarnpkg.com/gl-mat4/-/gl-mat4-1.1.4.tgz#1e895b55892e56a896867abd837d38f37a178086"
@@ -2044,7 +2062,7 @@ glogg@^1.0.0:
   dependencies:
     sparkles "^1.0.0"
 
-glsl-diffuse-lambert:
+glsl-diffuse-lambert@^1.0.0:
   version "1.0.0"
   resolved "https://registry.yarnpkg.com/glsl-diffuse-lambert/-/glsl-diffuse-lambert-1.0.0.tgz#a58a738d86eeed83ca9abd924b24df25435916b0"
 
@@ -2062,6 +2080,10 @@ glsl-resolve@0.0.1:
   dependencies:
     resolve "^0.6.1"
     xtend "^2.1.2"
+
+glsl-specular-blinn-phong@^1.0.1:
+  version "1.0.1"
+  resolved "https://registry.yarnpkg.com/glsl-specular-blinn-phong/-/glsl-specular-blinn-phong-1.0.1.tgz#ce1831b072ae0f3316a00b8ba458cc272dca80ea"
 
 glsl-specular-phong:
   version "1.0.0"
@@ -2115,27 +2137,6 @@ glsl-tokenizer@^2.0.0, glsl-tokenizer@^2.0.2:
   resolved "https://registry.yarnpkg.com/glsl-tokenizer/-/glsl-tokenizer-2.1.2.tgz#720307522e03c57af35c00551950c4a70ef2dfb9"
   dependencies:
     through2 "^0.6.3"
-
-glslify:
-  version "6.0.1"
-  resolved "https://registry.yarnpkg.com/glslify/-/glslify-6.0.1.tgz#a20e9b2470dade5b6bda57885ef0cc355aa4da55"
-  dependencies:
-    bl "^1.0.0"
-    concat-stream "^1.5.2"
-    duplexify "^3.4.5"
-    falafel "^2.0.0"
-    from2 "^2.3.0"
-    glsl-resolve "0.0.1"
-    glsl-token-whitespace-trim "^1.0.0"
-    glslify-bundle "^5.0.0"
-    glslify-deps "^1.2.5"
-    minimist "^1.2.0"
-    resolve "^1.1.5"
-    stack-trace "0.0.9"
-    static-eval "^1.1.1"
-    tape "^4.6.0"
-    through2 "^2.0.1"
-    xtend "^4.0.0"
 
 glslify-bundle@^2.0.4:
   version "2.0.4"
@@ -2195,6 +2196,27 @@ glslify@^2.1.1:
     resolve "^1.1.5"
     static-module "^1.1.2"
     through2 "^0.6.3"
+    xtend "^4.0.0"
+
+glslify@^6.0.1:
+  version "6.0.1"
+  resolved "https://registry.yarnpkg.com/glslify/-/glslify-6.0.1.tgz#a20e9b2470dade5b6bda57885ef0cc355aa4da55"
+  dependencies:
+    bl "^1.0.0"
+    concat-stream "^1.5.2"
+    duplexify "^3.4.5"
+    falafel "^2.0.0"
+    from2 "^2.3.0"
+    glsl-resolve "0.0.1"
+    glsl-token-whitespace-trim "^1.0.0"
+    glslify-bundle "^5.0.0"
+    glslify-deps "^1.2.5"
+    minimist "^1.2.0"
+    resolve "^1.1.5"
+    stack-trace "0.0.9"
+    static-eval "^1.1.1"
+    tape "^4.6.0"
+    through2 "^2.0.1"
     xtend "^4.0.0"
 
 got@^5.0.0:
@@ -3489,12 +3511,20 @@ preserve@^0.2.0:
   version "0.2.0"
   resolved "https://registry.yarnpkg.com/preserve/-/preserve-0.2.0.tgz#815ed1f6ebc65926f865b310c0713bcb3315ce4b"
 
-primitive-plane@^2.0.0:
-  version "2.0.0"
-  resolved "https://registry.yarnpkg.com/primitive-plane/-/primitive-plane-2.0.0.tgz#85dc2a858315d1735d5de87107c88a44089bc9dd"
 primitive-cube@^2.0.1:
   version "2.0.1"
   resolved "https://registry.yarnpkg.com/primitive-cube/-/primitive-cube-2.0.1.tgz#8aa5bc3cbff2efee83cce74cfcab8ac9b5b46b06"
+
+primitive-plane@^2.0.0:
+  version "2.0.0"
+  resolved "https://registry.yarnpkg.com/primitive-plane/-/primitive-plane-2.0.0.tgz#85dc2a858315d1735d5de87107c88a44089bc9dd"
+
+primitive-sphere@^3.0.0:
+  version "3.0.0"
+  resolved "https://registry.yarnpkg.com/primitive-sphere/-/primitive-sphere-3.0.0.tgz#7609bda5f6f6c9252213efa3127060ee65e6f732"
+  dependencies:
+    gl-mat4 "^1.1.4"
+    gl-vec3 "^1.0.3"
 
 private@^0.1.6, private@~0.1.5:
   version "0.1.6"

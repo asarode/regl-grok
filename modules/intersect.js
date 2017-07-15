@@ -9,83 +9,84 @@ import createSphere from 'primitive-sphere'
 const regl = Regl()
 
 const drawSphere = regl({
-  vert: `
+  context: {
+    model: function(context, props) {
+      mat4.create()
+    }
+  },
+  vert: glsl`
     precision mediump float;
+    #pragma glslify: computeTranslateMat = require(glsl-matrix/computeTranslateMat);
 
-    attribute vec3 position, normal;
-    uniform mat4 model, view, projection;
-    varying vec3 surfacePosition, surfaceNormal;
+    attribute vec3 position;
+    uniform mat4 view, projection;
+    uniform vec3 debugPosition;
 
     void main() {
-      surfaceNormal = normal;
-      surfacePosition = position;
-      gl_Position = projection * view * model * vec4(position, 1.0);
+      mat4 translation = computeTranslateMat(debugPosition);
+      gl_Position = projection * view * translation * vec4(position, 1.0);
     }
   `,
   frag: glsl`
     precision mediump float;
 
-    uniform vec3 surfaceColor;
+    uniform vec3 color;
 
     void main() {
-      gl_FragColor = vec4(surfaceColor, 1.0);
+      gl_FragColor = vec4(color, 1.0);
     }
   `,
   attributes: {
     position: regl.prop('positions'),
-    normal: regl.prop('normals'),
   },
   uniforms: {
-    model: regl.prop('model'),
+    debugPosition: regl.prop('debugPosition'),
     view: regl.context('view'),
     projection: regl.context('projection'),
-    surfaceColor: regl.prop('surfaceColor')
+    color: regl.prop('color')
   },
   elements: regl.prop('cells')
 })
 
-const drawCube = regl({
-  context: {
-    normalModel: function(context, props) {
-      const modelView = mat4.multiply([], context.view, props.model)
-      let normalModel = mat3.create()
-      mat3.transpose(normalModel, mat3.invert(normalModel, mat3.fromMat4(normalModel, modelView)))
-
-      return normalModel
-    }
-  },
-  vert: `
+const drawObject = regl({
+  vert: glsl`
     precision mediump float;
+    #pragma glslify: transpose = require(glsl-transpose)
 
     attribute vec3 position, normal;
     uniform mat4 model, view, projection;
-    uniform mat3 normalModel;
     varying vec3 surfacePosition, surfaceNormal;
 
     void main() {
-      surfaceNormal = normalModel * normal;
+      mat3 normalModel = transpose(mat3(view * model));
+      surfaceNormal = normal * normalModel;
       surfacePosition = (view * model * vec4(position, 1.0)).xyz;
       gl_Position = projection * view * model * vec4(position, 1.0);
     }
   `,
   frag: glsl`
     precision mediump float;
-    #pragma glslify: lambert = require(glsl-diffuse-lambert)
 
-    uniform vec3 eye, lightPosition, surfaceColor;
+    uniform mat4 model, view;
+    uniform vec3 eye, lightA, lightB, lightC, surfaceColor;
     varying vec3 surfacePosition, surfaceNormal;
 
     void main() {
-      vec3 lightDirection = normalize(lightPosition - surfacePosition);
+      mat4 viewModel = view * model;
+      vec3 lightADir = normalize((viewModel * vec4(lightA, 1.0)).xyz - surfacePosition);
+      vec3 lightBDir = normalize((viewModel * vec4(lightB, 1.0)).xyz - surfacePosition);
+      vec3 lightCDir = normalize((viewModel * vec4(lightC, 1.0)).xyz - surfacePosition);
       vec3 normal = normalize(surfaceNormal);
-      float diffuse = lambert(lightDirection, normal);
-      vec3 color = 0.1 + surfaceColor * diffuse;
+      float diffuseA = max(0.0, dot(lightADir, normal));
+      float diffuseB = max(0.0, dot(lightBDir, normal));
+      float diffuseC = max(0.0, dot(lightCDir, normal));
+      vec3 color = surfaceColor * (0.1 + diffuseA + diffuseB + diffuseC);
       gl_FragColor = vec4(color, 1.0);
     }
   `,
   attributes: {
-    position: regl.prop('positions'),
-    normal: regl.prop('normals'),
+    position: (context, props) => props.geometry.positions,
+    normal: (context, props) => props.geometry.normals,
   },
   uniforms: {
     model: regl.prop('model'),
@@ -93,10 +94,47 @@ const drawCube = regl({
     view: regl.context('view'),
     eye: regl.context('eye'),
     projection: regl.context('projection'),
-    lightPosition: regl.prop('lightPosition'),
+    lightA: regl.prop('lightA'),
+    lightB: regl.prop('lightB'),
+    lightC: regl.prop('lightC'),
     surfaceColor: regl.prop('surfaceColor')
   },
-  elements: regl.prop('cells')
+  elements: (context, props) => props.geometry.cells
+})
+
+const drawLine = regl({
+  vert: glsl`
+    precision mediump float;
+    #pragma glslify: computeTranslateMat = require(glsl-matrix/computeTranslateMat);
+
+    attribute vec3 endpoint;
+    uniform mat4 view, projection;
+
+    void main() {
+      mat4 translation = computeTranslateMat(endpoint);
+      gl_Position = projection * view * translation * vec4(0.0, 0.0, 0.0, 1.0);
+    }
+  `,
+  frag: `
+    precision mediump float;
+
+    uniform vec3 color;
+
+    void main() {
+      gl_FragColor = vec4(color, 1.0);
+    }
+  `,
+  attributes: {
+    endpoint: regl.prop('endpoints')
+  },
+  uniforms: {
+    color: regl.prop('color'),
+    projection: regl.context('projection'),
+    view: regl.context('view')
+  },
+  count: 2,
+  elements: [[1, 0]],
+  lineWidth: 1
 })
 
 const camera = createCamera({
@@ -108,15 +146,6 @@ const camera = createCamera({
 camera.translate([0, 8, 0])
 camera.lookAt([0, 0, 0])
 camera.update()
-
-const cube = createCube(1)
-const cubeModel = mat4.identity([])
-
-const lightPosition = [0, 3, 0]
-
-const sphere = createSphere(0.02, { segments: 16 })
-const sphereModel = mat4.translate([], mat4.identity([]), lightPosition)
-// const sphereModel = mat4.identity([])
 
 const setupCamera = regl({
   context: {
@@ -134,35 +163,74 @@ const setupCamera = regl({
   }
 })
 
+const drawDebugPoint = (passedProps) => {
+  const defaultProps = {
+    color: [1.0, 1.0, 0.0]
+  }
+  const props = { ...defaultProps, ...passedProps }
+  drawSphere({
+    positions: sphere.positions,
+    cells: sphere.cells,
+    debugPosition: props.debugPosition,
+    color: props.color
+  })
+  drawLine({
+    endpoints: [[0, 0, 0], props.debugPosition],
+    color: props.color
+  })
+}
+
+const sphere = createSphere(0.02, { segments: 16 })
+const bigSphere = createSphere(1.0, { segments: 16 })
+const identity = mat4.identity([])
+const lightA = [0.5, 1, -1]
+const lightB = [1, 1, -1]
+const lightC = [-1, 1, 0]
 regl.frame(() => {
   regl.clear({
     depth: 1,
-    color: [0.95, 0.95, 0.95, 1]
+    color: [0.1, 0.05, 0.25, 1.0]
   })
-
-  mat4.rotateX(cubeModel, cubeModel, 0.01)
-  mat4.rotateY(cubeModel, cubeModel, 0.00)
 
   setupCamera({
     view: camera.view,
     projection: camera.projection,
     eye: camera.position
   }, function(context) {
-    drawCube({
-      model: cubeModel,
-      positions: cube.positions,
-      normals: cube.normals,
-      cells: cube.cells,
-      lightPosition: lightPosition,
+    lightA[0] = Math.sin(context.tick / 100)
+    lightA[2] = Math.cos(context.tick / 100)
+
+    lightB[0] = Math.sin(context.tick / 100) * -2.4
+    lightB[1] = Math.sin(context.tick / 10) * 1.4
+    lightB[2] = 0.5 + Math.cos(context.tick / 100) * 1.8
+
+    lightC[0] = Math.sin(context.tick / 100) * 3
+    lightC[1] = Math.cos(context.tick / 100) * 3
+    lightC[2] = Math.sin(context.tick / 100) * 3
+    drawObject({
+      model: identity,
+      geometry: bigSphere,
+      lightA,
+      lightB,
+      lightC,
       surfaceColor: [0.7, 0.1, 0.8]
     })
 
-    drawSphere({
-      model: sphereModel,
-      positions: sphere.positions,
-      normals: sphere.normals,
-      cells: sphere.cells,
-      surfaceColor: [0.9, 0.1, 0.1]
+    drawDebugPoint({
+      sphere,
+      debugPosition: lightA,
+    })
+
+    drawDebugPoint({
+      sphere,
+      debugPosition: lightB,
+      color: [1.0, 0.0, 0.0],
+    })
+
+    drawDebugPoint({
+      sphere,
+      debugPosition: lightC,
+      color: [0.0, 1.0, 0.0],
     })
   })
 })

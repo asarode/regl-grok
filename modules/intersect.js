@@ -73,9 +73,9 @@ const drawObject = regl({
     varying vec4 surfacePosition;
 
     void main() {
-      vec3 lightADir = normalize(view * model * vec4(lightA, 1.0) - surfacePosition).xyz;
-      vec3 lightBDir = normalize(view * model * vec4(lightB, 1.0) - surfacePosition).xyz;
-      vec3 lightCDir = normalize(view * model * vec4(lightC, 1.0) - surfacePosition).xyz;
+      vec3 lightADir = normalize(view * vec4(lightA, 1.0) - surfacePosition).xyz;
+      vec3 lightBDir = normalize(view * vec4(lightB, 1.0) - surfacePosition).xyz;
+      vec3 lightCDir = normalize(view * vec4(lightC, 1.0) - surfacePosition).xyz;
       vec3 normal = normalize(surfaceNormal);
       float diffuseA = max(0.0, dot(lightADir, normal));
       float diffuseB = max(0.0, dot(lightBDir, normal));

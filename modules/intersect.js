@@ -27,7 +27,7 @@ const drawSphere = regl({
       gl_Position = projection * view * translation * vec4(position, 1.0);
     }
   `,
-  frag: glsl`
+  frag: `
     precision mediump float;
 
     uniform vec3 color;
@@ -54,36 +54,44 @@ const drawObject = regl({
     #pragma glslify: transpose = require(glsl-transpose)
 
     attribute vec3 position, normal;
-    uniform mat4 model, view, projection;
-    varying vec3 surfacePosition, surfaceNormal;
+    uniform mat4 model, view, projection, normalModel;
+    varying vec3 surfaceNormal;
+    varying vec4 surfacePosition;
 
     void main() {
-      mat3 normalModel = transpose(mat3(view * model));
-      surfaceNormal = normal * normalModel;
-      surfacePosition = (view * model * vec4(position, 1.0)).xyz;
-      gl_Position = projection * view * model * vec4(position, 1.0);
+      surfaceNormal = mat3(normalModel) * normal;
+      surfacePosition = view * model * vec4(position, 1.0);
+      gl_Position = projection * surfacePosition;
     }
   `,
-  frag: glsl`
+  frag: `
     precision mediump float;
 
     uniform mat4 model, view;
     uniform vec3 eye, lightA, lightB, lightC, surfaceColor;
-    varying vec3 surfacePosition, surfaceNormal;
+    varying vec3 surfaceNormal;
+    varying vec4 surfacePosition;
 
     void main() {
-      mat4 viewModel = view * model;
-      vec3 lightADir = normalize((viewModel * vec4(lightA, 1.0)).xyz - surfacePosition);
-      vec3 lightBDir = normalize((viewModel * vec4(lightB, 1.0)).xyz - surfacePosition);
-      vec3 lightCDir = normalize((viewModel * vec4(lightC, 1.0)).xyz - surfacePosition);
+      vec3 lightADir = normalize(view * model * vec4(lightA, 1.0) - surfacePosition).xyz;
+      vec3 lightBDir = normalize(view * model * vec4(lightB, 1.0) - surfacePosition).xyz;
+      vec3 lightCDir = normalize(view * model * vec4(lightC, 1.0) - surfacePosition).xyz;
       vec3 normal = normalize(surfaceNormal);
       float diffuseA = max(0.0, dot(lightADir, normal));
       float diffuseB = max(0.0, dot(lightBDir, normal));
       float diffuseC = max(0.0, dot(lightCDir, normal));
-      vec3 color = surfaceColor * (0.1 + diffuseA + diffuseB + diffuseC);
+      vec3 color = surfaceColor * (diffuseA + diffuseB + diffuseC);
       gl_FragColor = vec4(color, 1.0);
     }
   `,
+  context: {
+    normalModel: (context, props) => {
+      const normalModel = mat4.create()
+      const viewModel = mat4.create()
+      mat4.multiply(viewModel, context.view, props.model)
+      return mat4.transpose(normalModel, mat4.invert(normalModel, viewModel))
+    }
+  },
   attributes: {
     position: (context, props) => props.geometry.positions,
     normal: (context, props) => props.geometry.normals,
@@ -182,10 +190,12 @@ const drawDebugPoint = (passedProps) => {
 
 const sphere = createSphere(0.02, { segments: 16 })
 const bigSphere = createSphere(1.0, { segments: 16 })
-const identity = mat4.identity([])
+const cube = createCube(1)
+const objectModel = mat4.identity([])
 const lightA = [0.5, 1, -1]
 const lightB = [1, 1, -1]
 const lightC = [-1, 1, 0]
+
 regl.frame(() => {
   regl.clear({
     depth: 1,
@@ -207,8 +217,11 @@ regl.frame(() => {
     lightC[0] = Math.sin(context.tick / 100) * 3
     lightC[1] = Math.cos(context.tick / 100) * 3
     lightC[2] = Math.sin(context.tick / 100) * 3
+
+    mat4.rotateY(objectModel, objectModel, 0.01)
+
     drawObject({
-      model: identity,
+      model: objectModel,
       geometry: bigSphere,
       lightA,
       lightB,
